@@ -1,0 +1,17 @@
+--index-url https://download.pytorch.org/whl/cu126
+torch
+torchaudio
+torchvision
+
+--extra-index-url https://pypi.org/simple
+transformers==4.52.3
+accelerate>=0.27
+sentencepiece>=0.2
+einops>=0.7
+constriction==0.4.1
+joblib==1.5.1
+faiss-cpu
+cython
+ninja
+fairseq-fixed
+soundfile>=0.12

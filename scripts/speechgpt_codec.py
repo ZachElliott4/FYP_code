@@ -1,6 +1,6 @@
 import argparse, pathlib, json, os, urllib.request, sys
 
-import torch, torchaudio, faiss, joblib, numpy as np, constriction
+import torch, torchaudio, faiss, joblib, numpy as np, constriction, soundfile as sf
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from fairseq import checkpoint_utils
 from fairseq.models.text_to_speech.vocoder import CodeHiFiGANVocoder
@@ -99,8 +99,8 @@ def main():
     for i in range(1, len(input_ids)):
         ctx = torch.tensor([input_ids[:i]], device=args.device)
         logits = lm(ctx).logits[0, -1]
-        probs = torch.softmax(logits.float(), -1).cpu().numpy()
-        enc.encode(input_ids[i], constriction.stream.model.Categorical(probs, False))
+        probs = torch.softmax(logits.float(), -1).detach().cpu().numpy()
+        enc.encode(input_ids[i], constriction.stream.model.Categorical(probs, perfect=False))
 
     bitstream = enc.get_compressed()
     bpt_lm = 8 * len(bitstream) / len(unit_ids)
@@ -111,25 +111,27 @@ def main():
     vocab = lm.config.vocab_size
     uniform = np.ones(vocab, dtype=np.float32) / vocab
     for tid in input_ids[1:]:
-        enc_u.encode(tid, constriction.stream.model.Categorical(uniform, False))
+        enc_u.encode(tid, constriction.stream.model.Categorical(uniform, perfect=False))
     bitstream_u = enc_u.get_compressed()
     bpt_u = 8 * len(bitstream_u) / len(unit_ids)
     print(f"Uniform:   {bpt_u:.2f} bits/token  "
           f" -> gain {bpt_u - bpt_lm:.2f} ({(bpt_u-bpt_lm)/bpt_u:.1%})")
 
-    # 6) Decode & vocoder
+     # 6) Decode & vocoder
     dec, decoded = constriction.stream.queue.RangeDecoder(bitstream), [sosp]
     for _ in range(len(unit_ids) + 1):
         ctx = torch.tensor([decoded], device=args.device)
-        probs = torch.softmax(lm(ctx).logits[0, -1].float(), -1).cpu().numpy()
-        decoded.append(
-            dec.decode(constriction.stream.model.Categorical(probs.astype(np.float32)))
-        )
+        probs = torch.softmax(lm(ctx).logits[0, -1].float(), -1
+                 ).detach().cpu().numpy()
+        decoded.append(dec.decode(
+            constriction.stream.model.Categorical(probs.astype(np.float32),
+                                                  perfect=False)))
     assert decoded == input_ids, "round-trip mismatch"
 
     voc_cfg_path, voc_ckpt_path = ASSETS["vocoder_cfg"][0], ASSETS["vocoder_ckpt"][0]
     with open(voc_cfg_path) as f:
         voc_cfg = json.load(f)
+
     _orig_load = torch.load
     torch.load = lambda p, *a, **k: _orig_load(p, map_location="cpu")
     vocoder = CodeHiFiGANVocoder(voc_ckpt_path, voc_cfg).eval()
@@ -137,9 +139,11 @@ def main():
 
     unit_tensor = torch.tensor(unit_ids, dtype=torch.long).unsqueeze(0)
     with torch.no_grad():
-        wav_hat = vocoder({"code": unit_tensor}, dur_prediction=True).squeeze(0).cpu()
+        wav_hat = vocoder({"code": unit_tensor},
+                          dur_prediction=True).cpu()   # (1, N) keep channel dim
+
     out_wav = args.outdir / "recon.wav"
-    torchaudio.save(str(out_wav), wav_hat, 16000)
+    sf.write(out_wav, wav_hat.squeeze(0).numpy(), 16_000)
 
     # 7) Save stats
     stats = {
@@ -148,7 +152,8 @@ def main():
         "bpt_uniform": bpt_u,
     }
     (args.outdir / "stats.json").write_text(json.dumps(stats, indent=2))
-    print("Done; files in", args.outdir)
+    print("Done — files written to", args.outdir)
+
 
 
 if __name__ == "__main__":

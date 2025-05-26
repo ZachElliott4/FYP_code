@@ -1,0 +1,12 @@
+
+# Virtual env
+.venv/
+
+# Python artefacts
+__pycache__/
+*.py[cod]
+
+# Generated files
+outputs/
+*.wav
+

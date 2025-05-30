@@ -1,0 +1,5 @@
+datasets>=2.19
+soundfile
+tqdm
+ffmpeg-python
+sox

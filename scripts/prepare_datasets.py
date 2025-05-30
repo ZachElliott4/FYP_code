@@ -10,7 +10,6 @@ import librosa
 import datasets
 from tqdm import tqdm
 
-# ────────────────────────── corpus catalogue ──────────────────────────
 DATASETS: Dict[str, Dict] = {
     "librispeech_clean": {
         "hf_name":  "librispeech_asr",
@@ -42,7 +41,6 @@ PCM_MAX    = 32_767
 QUOTA_MB   = 250                               # per corpus
 rng        = random.Random()
 
-# ─────────────────────────── helpers ───────────────────────────
 def resample_mono(wav: np.ndarray, sr: int) -> np.ndarray:
     """Return ≤30 s mono int16 at 16 kHz."""
     if wav.ndim == 2 and wav.shape[0] > 1:
@@ -67,7 +65,6 @@ def load_audio_field(audio_field) -> Tuple[np.ndarray, int]:
         return np.asarray(audio_field["array"]), audio_field["sampling_rate"]
     raise ValueError("Unexpected audio field structure")
 
-# ─────────────────────────── main ────────────────────────────
 def main() -> None:
     ap = argparse.ArgumentParser(
         description="Download ≈250 MB per English corpus and build eval_manifest.json"

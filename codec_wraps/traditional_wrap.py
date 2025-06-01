@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Traditional codecs
+Traditional codec
 """
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ def decode(bitstream: Dict[str, bytes], sr: int | None = None) -> np.ndarray:
         comp = Path(tmpdir) / f"in{_EXT}"
         comp.write_bytes(bitstream["bytes"])
         wav = Path(tmpdir) / "out.wav"
-        _ffmpeg(comp, wav, ["-c:a", "pcm_s16le", "-ac", "1"])  # 16‑bit mono PCM
+        _ffmpeg(comp, wav, ["-c:a", "pcm_s16le", "-ac", "1"])
         audio, _ = sf.read(wav, dtype="float32")
         if audio.ndim == 2:
             audio = audio.mean(axis=1)

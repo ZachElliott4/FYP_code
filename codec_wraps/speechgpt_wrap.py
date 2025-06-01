@@ -17,11 +17,10 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 
 torch.serialization.add_safe_globals([Dictionary])
 
-# user‑configurable env vars
 LM_ID      = os.getenv("SGPT_LM", "fnlp/SpeechGPT-7B-cm")
 DEVICE     = torch.device(os.getenv("SGPT_DEVICE", "cuda" if torch.cuda.is_available() else "cpu"))
-STEP       = int(os.getenv("SGPT_FRAME_STEP", "1"))        # frame skip (1=20 ms)
-PACK_MODE  = os.getenv("SGPT_PACK", "lm").lower()           # "lm" or "uniform"
+STEP       = int(os.getenv("SGPT_FRAME_STEP", "1"))
+PACK_MODE  = os.getenv("SGPT_PACK", "lm").lower()
 
 ROOT = Path(__file__).resolve().parent
 ASSET_DIR = ROOT / "assets"; ASSET_DIR.mkdir(exist_ok=True)

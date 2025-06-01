@@ -1,13 +1,10 @@
 --index-url https://download.pytorch.org/whl/cu126
 torch
-torchaudio
-torchvision
 
 --extra-index-url https://pypi.org/simple
-transformers==4.52.3
-accelerate>=0.27 
-constriction==0.4.1
-numpy>=1.26
-soundfile>=0.12
-joblib==1.5.0
+transformers>=4.40
+accelerate>=0.28
+constriction>=0.4
+tqdm>=4.65
+bitsandbytes
 flash-attn --no-build-isolation

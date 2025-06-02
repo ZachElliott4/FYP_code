@@ -1,4 +1,3 @@
-# scripts/prepare_datasets.py
 from __future__ import annotations
 import argparse, json, random, shutil
 from pathlib import Path
@@ -15,30 +14,32 @@ DATASETS: Dict[str, Dict] = {
         "hf_name":  "librispeech_asr",
         "hf_config": "clean",
         "hf_split":  "test",
+        "trust_remote_code": True,
     },
     "librispeech_other": {
         "hf_name":  "librispeech_asr",
         "hf_config": "other",
         "hf_split":  "test",
+        "trust_remote_code": True,
     },
-    "commonvoice_en": {                         # Common Voice v11 EN test
+    "commonvoice_en": {
         "hf_name":  "mozilla-foundation/common_voice_11_0",
         "hf_config": "en",
         "hf_split":  "test",
-        "trust_remote_code": True,              # suppress prompt
+        "trust_remote_code": True,
     },
-    "voxpopuli_en": {                           # VoxPopuli EN test
+    "voxpopuli_en": {
         "hf_name":  "facebook/voxpopuli",
         "hf_config": "en",
         "hf_split":  "test",
-        "trust_remote_code": True,              # suppress prompt
+        "trust_remote_code": True,
     },
 }
 
 TARGET_SR  = 16_000
 MAX_SEC    = 30
 PCM_MAX    = 32_767
-QUOTA_MB   = 250                               # per corpus
+QUOTA_MB   = 250
 rng        = random.Random()
 
 def resample_mono(wav: np.ndarray, sr: int) -> np.ndarray:
